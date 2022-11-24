@@ -6,6 +6,7 @@ from time import time
 from urllib import request
 
 import numpy as np
+import psutil
 import requests as rq
 from PIL import Image
 from bs4 import BeautifulSoup
@@ -21,44 +22,41 @@ headers: list[list[(str, str)]] = [
 
 
 def get_soup(url: str, usage: str):
+    pprint(f'{usage} : {url}')
     opener = request.build_opener()
     header = headers[randint(0, len(headers) - 1)]
     opener.addheaders = header
     request.install_opener(opener)
-    html = request.urlopen(url)
-    Soup = BeautifulSoup(html.read(), "html.parser")
-    # print(f"{usage} : {url}")
-    html.close()
-    return Soup
+    with request.urlopen(url) as html:
+        soup = BeautifulSoup(html.read(), "html.parser")
+    return soup
 
 
 def pprint(text):
-    print(text)
+    memory_info = psutil.Process().memory_info()
+    rss = memory_info.rss / 2 ** 20
+    vms = memory_info.vms / 2 ** 20
+    print(f"RSS: {rss: 10.6f} MB, VMS: {vms: 10.6f} | {text}")
 
 
 def img_add(img_arr: list):
-    """
-    Add images to one image
-    :param img_arr: url list is image
-    :return: img
-    """
     start_time = time()
     new_img = None
-    img_num_ = 0
+    img_num = 0
     img_size = 0
-    point = 15
+    point = 5
 
     for i in range(len(img_arr) - 1):
-        head = {'User-Agent': headers[randint(0, len(headers) - 1)][0][1]}
+        header = {'User-Agent': headers[randint(0, len(headers) - 1)][0][1]}
         if i == 0:
             img_size = 0
         start = time()
-        img_num_ += 1
+        img_num += 1
         if i == 0:
-            first_img = Image.open(BytesIO(rq.get(img_arr[i], headers=head).content))
+            first_img = Image.open(BytesIO(rq.get(img_arr[i], headers=header).content))
         else:
             first_img = new_img
-        second_img = Image.open(BytesIO(rq.get(img_arr[i + 1], headers=head).content))
+        second_img = Image.open(BytesIO(rq.get(img_arr[i + 1], headers=header).content))
         first_img_size = first_img.size
         second_img_size = second_img.size
         new_img = Image.new('RGB', (first_img_size[0], first_img_size[1] + (second_img_size[1])), (255, 255, 255))
@@ -67,18 +65,12 @@ def img_add(img_arr: list):
         new_img_y = new_img.size[1]
         plus_img_size = new_img_y - img_size
         total_img_size = (new_img.size[0] * new_img_y) / 10
-        if len(str(new_img_y)) == 4:
-            new_img_y = '0' + str(new_img_y)
-        if len(str(total_img_size)) == 6:
-            total_img_size = '0' + str(total_img_size)
-        if len(str(img_num_)) == 1:
-            img_num = '0' + str(img_num_)
-        else:
-            img_num = img_num_
-        pprint(f"{img_num} | {time() - start : 0.{point}f} | {time() - start_time : 0.{point}f} | "
-               f"{total_img_size} | {int(total_img_size)/1000000 : 0.{point - 10}f} | {new_img_y} | +{plus_img_size} ")
+        if img_num < 10:
+            img_num = str('0' + str(img_num))
+        pprint(f"{img_num} | {float(time() - start) : 10.{point}f} | {float(time() - start_time) : 10.{point}f} | "
+               f"{int(total_img_size)} | {float(total_img_size)/1000000 : 10.{point}f} | {int(new_img_y)} | +{int(plus_img_size)}")
         img_size = new_img.size[1]
-
+        img_num = int(img_num)
     return new_img
 
 
@@ -103,7 +95,6 @@ def file_delete(address):
         pprint('File in fold is not exists')
         os.makedirs(address)
         file_delete(address)
-    return
 
 
 def file_make(address):
@@ -113,10 +104,9 @@ def file_make(address):
         os.makedirs(address)
     else:
         pprint('already exists')
-    return
 
 
-def img_download_cut(url: list, to_save_folder: str = 'toon', white_space: int = 10):
+def img_download_cut(url: list, to_save_folder: str = 'toon', white_space: int = 1):
     if to_save_folder[-1] != '/':
         to_save_folder = to_save_folder + '/'
     episode = 1
@@ -143,14 +133,15 @@ def img_download_cut(url: list, to_save_folder: str = 'toon', white_space: int =
                 cut_img_y = y
                 count = 0
                 img_num += 1
+        del pix
         episode += 1
-    return
 
 
 if __name__ == '__main__':
     url = 'https://comic.naver.com/webtoon/detail?titleId=784248&no=51~&weekday=tue'
-    title = get_title(url)
+
     start_time = time()
-    ep = get_ep(url)
-    img_download_cut(url=ep, to_save_folder=title)
+
+    img_download_cut(url=get_ep(url), to_save_folder=get_title(url))
+
     pprint(time() - start_time)
