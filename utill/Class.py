@@ -37,7 +37,7 @@ class Nt_Downloader:
             else:
                 raise FileNotFoundError(f'Not found directory "{location}"')
 
-    def DownloadNT(self):
+    def Download(self):
         url = self._url
         location = self._location
 

@@ -40,18 +40,18 @@ def pprint(text):
 
 
 def img_add(img_arr: list):
-    start_time = time()
+    # start_time = time()
     new_img = None
-    img_num = 0
-    img_size = 0
-    point = 5
+    # img_num = 0
+    # img_size = 0
+    # point = 5
 
     for i in range(len(img_arr) - 1):
         header = {'User-Agent': headers[randint(0, len(headers) - 1)][0][1]}
-        if i == 0:
-            img_size = 0
-        start = time()
-        img_num += 1
+        # if i == 0:
+        #     img_size = 0
+        # start = time()
+        # img_num += 1
         if i == 0:
             first_img = Image.open(BytesIO(rq.get(img_arr[i], headers=header).content))
         else:
@@ -62,15 +62,15 @@ def img_add(img_arr: list):
         new_img = Image.new('RGB', (first_img_size[0], first_img_size[1] + (second_img_size[1])), (255, 255, 255))
         new_img.paste(first_img, (0, 0))
         new_img.paste(second_img, (0, first_img_size[1]))
-        new_img_y = new_img.size[1]
-        plus_img_size = new_img_y - img_size
-        total_img_size = (new_img.size[0] * new_img_y) / 10
-        if img_num < 10:
-            img_num = str('0' + str(img_num))
-        pprint(f"{img_num} | {float(time() - start) : 10.{point}f} | {float(time() - start_time) : 10.{point}f} | "
-               f"{int(total_img_size)} | {float(total_img_size)/1000000 : 10.{point}f} | {int(new_img_y)} | +{int(plus_img_size)}")
-        img_size = new_img.size[1]
-        img_num = int(img_num)
+        # new_img_y = new_img.size[1]
+        # plus_img_size = new_img_y - img_size
+        # total_img_size = (new_img.size[0] * new_img_y) / 10
+        # if img_num < 10:
+        #     img_num = str('0' + str(img_num))
+        # pprint(f"{img_num} | {float(time() - start) : 10.{point}f} | {float(time() - start_time) : 10.{point}f} | "
+        #        f"{int(total_img_size)} | {float(total_img_size)/1000000 : 10.{point}f} | {int(new_img_y)} | +{int(plus_img_size)}")
+        # img_size = new_img.size[1]
+        # img_num = int(img_num)
     return new_img
 
 
@@ -78,7 +78,7 @@ def get_ep(url: str):
     wt_id = re.findall('titleId=([0-9]+)', url)[0]
     wt_url = 'https://comic.naver.com/webtoon/list?titleId=' + str(wt_id)
     ep = re.findall('no=([0-9]+)', str(get_soup(wt_url, 'get ep').select('.title')[1]).replace('\n', ''))[0]
-    ep_list = [f'https://comic.naver.com/webtoon/detail?titleId=784248&no={i + 1}' for i in range(int(ep))]
+    ep_list = [f'https://comic.naver.com/webtoon/detail?titleId={wt_id}&no={i + 1}' for i in range(int(ep))]
     return ep_list
 
 
@@ -138,10 +138,7 @@ def img_download_cut(url: list, to_save_folder: str = 'toon', white_space: int =
 
 
 if __name__ == '__main__':
-    url = 'https://comic.naver.com/webtoon/detail?titleId=784248&no=51~&weekday=tue'
-
+    url = 'https://comic.naver.com/webtoon/detail?titleId=784248&no=51&weekday=tue'
     start_time = time()
-
     img_download_cut(url=get_ep(url), to_save_folder=get_title(url))
-
     pprint(time() - start_time)
